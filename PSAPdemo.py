@@ -53,7 +53,9 @@ class ResponseButton:
 # 게임 클래스
 class PSAPGame:
     def __init__(self):
-        self.points = 100
+        self.points = 0
+        self.FR = 0
+        self.currentButton = ''
         self.pfi_active = False
         self.score_subtracted = False
         self.start_screen = True
@@ -63,6 +65,7 @@ class PSAPGame:
             ResponseButton("B", (340, 350), self.press_button_b),
             ResponseButton("C", (480, 350), self.press_button_c)
         ]
+        
 
     def start_game(self):
         self.start_screen = False
@@ -76,35 +79,61 @@ class PSAPGame:
             
         else:
             # print("after")
+            if self.currentButton == 'A' and self.FR > 100:
+                self.add_point()
+            elif self.currentButton == 'B' and self.FR > 10:
+                self.subtract_point()
+            elif self.currentButton == 'C' and self.FR > 10:
+                self.start_pfi()
+                
             points_text = font.render(f"Points: {self.points}", True, WHITE)
             screen.blit(points_text, (350, 50))
+            FR_ratio = f"FR: {self.FR}"
+            if self.currentButton == 'A':
+                FR_ratio = f"FR: {self.FR}/100"
+            elif self.currentButton == 'B' or self.currentButton == 'C':
+                FR_ratio = f"FR: {self.FR}/10"
+            FR_text = font.render(FR_ratio, True, WHITE)
+            screen.blit(FR_text, (350, 200))
             for button in self.buttons:
                 button.draw(screen)
 
         pygame.display.flip()
 
     def press_button_a(self):
-        self.points += 1
+        if self.FR == 0:
+            self.currentButton = 'A'
+        self.FR += 1
         self.update_screen()
 
     def press_button_b(self):
-        self.subtract_point()
-        self.start_pfi()
-
-    def press_button_c(self):
-        if self.score_subtracted:
-            self.start_pfi()
-        else:
-            print("Cannot start PFI. No point has been subtracted yet.")
-
-    def subtract_point(self):
-        self.points -= 1
-        self.score_subtracted = True
+        if self.FR == 0:
+            self.currentButton = 'B'
+        self.FR += 1
         self.update_screen()
+        
+    def press_button_c(self):
+        if self.FR == 0:
+            self.currentButton = 'C'
+        self.FR += 1 
+        self.update_screen()
+        # if self.score_subtracted:
+        #     self.start_pfi()
+        # else:
+        #     print("Cannot start PFI. No point has been subtracted yet.")
+
+    def add_point(self):
+        self.points += 1
+        self.FR = 0
+        
+    def subtract_point(self):
+        self.score_subtracted = True
+        self.FR = 0
 
     def start_pfi(self):
         self.pfi_active = True
         self.score_subtracted = False
+        self.FR = 0
         self.update_screen()
 
 # 게임 루프
