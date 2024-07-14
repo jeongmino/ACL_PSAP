@@ -123,15 +123,20 @@ class PSAPGame:
                 FR_ratio = f"FR: {self.FR}/10"
             FR_text = font.render(FR_ratio, True, WHITE)
             screen.blit(FR_text, (350, 200))
+            print("now: ", self.currentButton)
             if self.currentButton == "None":
                 for button in self.buttons:
                     button.draw(screen)
+                print("None")
             elif self.currentButton == "A":
                 ResponseButton("A", (200, 350), self.press_button_a).draw(screen)
+                print("A")
             elif self.currentButton == "B":
                 ResponseButton("B", (340, 350), self.press_button_b).draw(screen)
+                print("B")
             elif self.currentButton == "C":
                 ResponseButton("C", (480, 350), self.press_button_c).draw(screen)
+                print("C")
 
         pygame.display.flip()
 
@@ -156,6 +161,7 @@ class PSAPGame:
             self.FR += 1
             self.response_a += 1
         self.log_event()
+        print("current button: ", self.currentButton)
         self.update_screen()
 
     def press_button_b(self):
@@ -189,18 +195,18 @@ class PSAPGame:
     def add_point(self):
         self.points += 1
         self.FR = 0
-        self.currentButton == "None"
+        self.currentButton = "None"
         
     def subtract_point(self):
         self.score_subtracted = True
         self.FR = 0
-        self.currentButton == "None"
+        self.currentButton = "None"
         
     def start_pfi(self):
         self.pfi_active = True
         self.score_subtracted = False
         self.FR = 0
-        self.currentButton == "None"
+        self.currentButton = "None"
 
     def enable_button(self):
         for button in self.buttons:
@@ -210,7 +216,7 @@ class PSAPGame:
 # 게임 루프
 game = PSAPGame(log_file_name)
 running = True
-
+cnt = 0;
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -223,8 +229,10 @@ while running:
                 for button in game.buttons:
                     if button.is_clicked(event):
                         button.action()
-
-    game.update_screen()
+    if cnt == 0:
+        game.update_screen()
+    cnt += 1
+    
 
 pygame.quit()
 sys.exit()
