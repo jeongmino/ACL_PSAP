@@ -34,6 +34,7 @@ font = pygame.font.Font(None, 36)
 # 색상 설정
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
+GREY = (169, 169, 169)
 
 # 버튼 클래스
 class StartButton:
@@ -53,18 +54,19 @@ class StartButton:
     def is_clicked(self, event):
         return self.rect.collidepoint(event.pos)
 
-
 class ResponseButton:
     def __init__(self, text, pos, action):
         self.text = text
         self.pos = pos
         self.action = action
+        self.active = True
         self.rect = pygame.Rect(pos[0], pos[1], 150, 50)
 
     def draw(self, screen):
+        color = WHITE if self.active else GREY
         pygame.draw.rect(screen, BLACK, self.rect)
         ResponseFont = pygame.font.Font(None, 64)
-        text_surf = ResponseFont.render(self.text, True, WHITE)
+        text_surf = ResponseFont.render(self.text, True, color)
         text_rect = text_surf.get_rect(center=self.rect.center)
         screen.blit(text_surf, text_rect)
         # screen.blit(text_surf, (self.pos[0] + 10, self.pos[1] + 10))
@@ -72,6 +74,8 @@ class ResponseButton:
     def is_clicked(self, event):
         return self.rect.collidepoint(event.pos)
 
+    def set_active(self, active):
+        self.active = active
 
 
 # 게임 클래스
@@ -103,16 +107,14 @@ class PSAPGame:
         if self.start_screen:
             # print("before")
             self.start_button.draw(screen)
-            
         else:
             # print("after")
-            if self.currentButton == 'A' and self.FR > 5:
-                self.add_point()
-            elif self.currentButton == 'B' and self.FR > 10:
-                self.subtract_point()
-            elif self.currentButton == 'C' and self.FR > 10:
-                self.start_pfi()
-                
+            # if self.currentButton == 'A' and self.FR > 5:
+            #     self.add_point()
+            # elif self.currentButton == 'B' and self.FR > 10:
+            #     self.subtract_point()
+            # elif self.currentButton == 'C' and self.FR > 10:
+            #     self.start_pfi()
             points_text = font.render(f"Points: {self.points}", True, WHITE)
             screen.blit(points_text, (350, 50))
             FR_ratio = f"FR: {self.FR}"
@@ -122,15 +124,19 @@ class PSAPGame:
                 FR_ratio = f"FR: {self.FR}/10"
             FR_text = font.render(FR_ratio, True, WHITE)
             screen.blit(FR_text, (350, 200))
-            if self.currentButton == "None":
-                for button in self.buttons:
-                    button.draw(screen)
-            elif self.currentButton == "A":
-                 ResponseButton("A", (200, 350), self.press_button_a).draw(screen)
-            elif self.currentButton == "B":
-                 ResponseButton("B", (340, 350), self.press_button_b).draw(screen)
-            elif self.currentButton == "C":
-                 ResponseButton("C", (480, 350), self.press_button_c).draw(screen)
+            self.enable_button()
+            self.disable_button()
+            for button in self.buttons:
+                button.draw(screen)
+            # if self.currentButton == "None":
+            #     for button in self.buttons:
+            #         button.draw(screen)
+            # elif self.currentButton == "A":
+            #     ResponseButton("A", (200, 350), self.press_button_a).draw(screen)
+            # elif self.currentButton == "B":
+            #     ResponseButton("B", (340, 350), self.press_button_b).draw(screen)
+            # elif self.currentButton == "C":
+            #     ResponseButton("C", (480, 350), self.press_button_c).draw(screen)
 
         pygame.display.flip()
 
@@ -194,6 +200,19 @@ class PSAPGame:
         self.score_subtracted = False
         self.FR = 0
         self.currentButton == "None"
+
+    def disable_button(self):
+        if self.currentButton == "None":
+            print("here")
+            return;
+        else: 
+            for button in self.buttons:
+                if self.currentButton != button.text:
+                    button.set_active(False)
+
+    def enable_button(self):
+        for button in self.buttons:
+            button.set_active(True)
 
 
 # 게임 루프
