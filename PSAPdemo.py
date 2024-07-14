@@ -63,10 +63,9 @@ class ResponseButton:
         self.rect = pygame.Rect(pos[0], pos[1], 150, 50)
 
     def draw(self, screen):
-        color = WHITE if self.active else GREY
         pygame.draw.rect(screen, BLACK, self.rect)
         ResponseFont = pygame.font.Font(None, 64)
-        text_surf = ResponseFont.render(self.text, True, color)
+        text_surf = ResponseFont.render(self.text, True, WHITE)
         text_rect = text_surf.get_rect(center=self.rect.center)
         screen.blit(text_surf, text_rect)
         # screen.blit(text_surf, (self.pos[0] + 10, self.pos[1] + 10))
@@ -124,28 +123,27 @@ class PSAPGame:
                 FR_ratio = f"FR: {self.FR}/10"
             FR_text = font.render(FR_ratio, True, WHITE)
             screen.blit(FR_text, (350, 200))
-            self.enable_button()
-            self.disable_button()
-            for button in self.buttons:
-                button.draw(screen)
-            # if self.currentButton == "None":
-            #     for button in self.buttons:
-            #         button.draw(screen)
-            # elif self.currentButton == "A":
-            #     ResponseButton("A", (200, 350), self.press_button_a).draw(screen)
-            # elif self.currentButton == "B":
-            #     ResponseButton("B", (340, 350), self.press_button_b).draw(screen)
-            # elif self.currentButton == "C":
-            #     ResponseButton("C", (480, 350), self.press_button_c).draw(screen)
+            if self.currentButton == "None":
+                for button in self.buttons:
+                    button.draw(screen)
+            elif self.currentButton == "A":
+                ResponseButton("A", (200, 350), self.press_button_a).draw(screen)
+            elif self.currentButton == "B":
+                ResponseButton("B", (340, 350), self.press_button_b).draw(screen)
+            elif self.currentButton == "C":
+                ResponseButton("C", (480, 350), self.press_button_c).draw(screen)
 
         pygame.display.flip()
 
     def log_event(self):
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]  # 밀리세컨드까지 포함
         elapsed_time = int(time.perf_counter() * 1000)  # 밀리세컨드 단위 시간
+        current_button = self.currentButton
+        if self.FR == 0:
+            current_button = "X"
         with open(log_file_name, mode='a', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow([self.response_a, self.response_b, self.response_c, self.currentButton, 
+            writer.writerow([self.response_a, self.response_b, self.response_c, current_button, 
                              self.FR, self.points, timestamp])
 
     def press_button_a(self):
@@ -153,9 +151,10 @@ class PSAPGame:
             self.currentButton = 'A'
         if self.FR == FR_A:
             self.add_point()
-        else:
+            self.response_a += 1
+        elif self.currentButton == 'A':
             self.FR += 1
-        self.response_a += 1
+            self.response_a += 1
         self.log_event()
         self.update_screen()
 
@@ -164,9 +163,10 @@ class PSAPGame:
             self.currentButton = 'B'
         if self.FR == FR_B:
             self.subtract_point()
-        else:
+            self.response_b += 1
+        elif self.currentButton == 'B':
             self.FR += 1
-        self.response_b += 1
+            self.response_b += 1
         self.log_event()
         self.update_screen()
         
@@ -175,9 +175,10 @@ class PSAPGame:
             self.currentButton = 'C'
         if self.FR == FR_C:
             self.start_pfi()
-        else:
+            self.response_c += 1    
+        elif self.currentButton == 'C':
             self.FR += 1
-        self.response_c += 1    
+            self.response_c += 1    
         self.log_event()
         self.update_screen()
         # if self.score_subtracted:
@@ -200,15 +201,6 @@ class PSAPGame:
         self.score_subtracted = False
         self.FR = 0
         self.currentButton == "None"
-
-    def disable_button(self):
-        if self.currentButton == "None":
-            print("here")
-            return;
-        else: 
-            for button in self.buttons:
-                if self.currentButton != button.text:
-                    button.set_active(False)
 
     def enable_button(self):
         for button in self.buttons:
