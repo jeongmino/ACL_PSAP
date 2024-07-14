@@ -3,12 +3,16 @@ import sys
 import csv
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 #전역변수로 각 Response의 할당량 설정
 FR_A = 5
 FR_B = 10
 FR_C = 10
+
+#게임 타이머
+GAME_DURATION = 10  # 게임 지속 시간 (초 단위)
+
 
 #로그 파일 설정
 try:
@@ -28,6 +32,9 @@ pygame.init()
 screen = pygame.display.set_mode((800, 600))
 pygame.display.set_caption('PSAP Game')
 font = pygame.font.Font(None, 36)
+
+timer_font_name = pygame.font.match_font('arial')
+timer_font = pygame.font.Font(timer_font_name, 36)
 
 
 
@@ -87,9 +94,12 @@ class PSAPGame:
         self.response_c = 0
         self.currentButton = 'None'
         self.log_file_name = log_file
+        self.start_time = None
+        self.remaining_time = GAME_DURATION
         self.pfi_active = False
         self.score_subtracted = False
         self.start_screen = True
+        self.game_over = False
         self.start_button = StartButton("Start", (325, 250), self.start_game)
         self.buttons = [
             ResponseButton("A", (200, 350), self.press_button_a),
@@ -99,6 +109,7 @@ class PSAPGame:
 
     def start_game(self):
         self.start_screen = False
+        self.start_time = datetime.now()
         self.update_screen()
 
     def update_screen(self):
@@ -106,23 +117,34 @@ class PSAPGame:
         if self.start_screen:
             # print("before")
             self.start_button.draw(screen)
+        elif self.game_over:
+            end_text = font.render("Every journey's end is a new beginning waiting to unfold", True, WHITE)
+            screen.blit(end_text, (screen.get_width() // 2 - end_text.get_width() // 2, screen.get_height() // 2 - end_text.get_height() // 2))
         else:
-            # print("after")
-            # if self.currentButton == 'A' and self.FR > 5:
-            #     self.add_point()
-            # elif self.currentButton == 'B' and self.FR > 10:
-            #     self.subtract_point()
-            # elif self.currentButton == 'C' and self.FR > 10:
-            #     self.start_pfi()
+            #타이머 렌더링
+            current_time = datetime.now()
+            elapsed_time = (current_time - self.start_time).total_seconds()
+            self.remaining_time = max(GAME_DURATION - elapsed_time, 0)
+            minutes = int(self.remaining_time // 60)
+            seconds = int(self.remaining_time % 60)
+            time_text = timer_font.render(f"{minutes}m:{seconds}s left", True, WHITE)
+            screen.blit(time_text, (10, 10))
+            
+            if self.remaining_time <= 0:
+                self.end_game()
+            
+            #포인트 렌더링
             points_text = font.render(f"Points: {self.points}", True, WHITE)
             screen.blit(points_text, (350, 50))
+            
+            #FR 렌더링
             FR_ratio = f"FR: {self.FR}"
             if self.currentButton == 'A':
                 FR_ratio = f"FR: {self.FR}/5"
             elif self.currentButton == 'B' or self.currentButton == 'C':
                 FR_ratio = f"FR: {self.FR}/10"
             FR_text = font.render(FR_ratio, True, WHITE)
-            screen.blit(FR_text, (350, 200))
+            screen.blit(FR_text, (375, 200))
             print("now: ", self.currentButton)
             if self.currentButton == "None":
                 for button in self.buttons:
@@ -137,7 +159,7 @@ class PSAPGame:
             elif self.currentButton == "C":
                 ResponseButton("C", (480, 350), self.press_button_c).draw(screen)
                 print("C")
-
+            
         pygame.display.flip()
 
     def log_event(self):
@@ -208,10 +230,10 @@ class PSAPGame:
         self.FR = 0
         self.currentButton = "None"
 
-    def enable_button(self):
-        for button in self.buttons:
-            button.set_active(True)
-
+    def end_game(self):
+        self.game_over = True
+        self.update_screen()
+    
 
 # 게임 루프
 game = PSAPGame(log_file_name)
@@ -229,9 +251,10 @@ while running:
                 for button in game.buttons:
                     if button.is_clicked(event):
                         button.action()
-    if cnt == 0:
-        game.update_screen()
-    cnt += 1
+    game.update_screen()
+    # if cnt == 0:
+    #     game.update_screen()
+    # cnt += 1
     
 
 pygame.quit()
