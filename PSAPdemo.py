@@ -20,7 +20,8 @@ try:
 except:
     pass
 timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-log_file_name = "./LogFile/PSAP_Logfile_" + str(timestamp)
+# log_file_name = "./LogFile/PSAP_Logfile_" + str(timestamp)
+log_file_name = f".\\Logfile\\PSAP_Logfile_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.csv"
 with open(log_file_name, mode='w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(["Response A", "Response B", "Response C", "Current Response"
@@ -32,7 +33,7 @@ pygame.init()
 screen = pygame.display.set_mode((800, 600))
 pygame.display.set_caption('PSAP Game')
 font = pygame.font.Font(None, 36)
-
+end_font = pygame.font.Font(None, 64)
 timer_font_name = pygame.font.match_font('arial')
 timer_font = pygame.font.Font(timer_font_name, 36)
 
@@ -115,11 +116,13 @@ class PSAPGame:
     def update_screen(self):
         screen.fill(BLACK)
         if self.start_screen:
-            # print("before")
             self.start_button.draw(screen)
         elif self.game_over:
-            end_text = font.render("Every journey's end is a new beginning waiting to unfold", True, WHITE)
-            screen.blit(end_text, (screen.get_width() // 2 - end_text.get_width() // 2, screen.get_height() // 2 - end_text.get_height() // 2))
+            end_text = end_font.render("Game Over", True, WHITE)
+            result_text = end_font.render(f'your point is {self.points}', True, WHITE)
+            screen.blit(end_text, (screen.get_width() // 2 - end_text.get_width() // 2, screen.get_height() // 2 - end_text.get_height() // 1.8))
+            screen.blit(result_text, (screen.get_width() // 2 - end_text.get_width() // 1.6, screen.get_height() // 2 + end_text.get_height()))
+
         else:
             #타이머 렌더링
             current_time = datetime.now()
@@ -145,20 +148,15 @@ class PSAPGame:
                 FR_ratio = f"FR: {self.FR}/10"
             FR_text = font.render(FR_ratio, True, WHITE)
             screen.blit(FR_text, (375, 200))
-            print("now: ", self.currentButton)
             if self.currentButton == "None":
                 for button in self.buttons:
                     button.draw(screen)
-                print("None")
             elif self.currentButton == "A":
                 ResponseButton("A", (200, 350), self.press_button_a).draw(screen)
-                print("A")
             elif self.currentButton == "B":
                 ResponseButton("B", (340, 350), self.press_button_b).draw(screen)
-                print("B")
             elif self.currentButton == "C":
                 ResponseButton("C", (480, 350), self.press_button_c).draw(screen)
-                print("C")
             
         pygame.display.flip()
 
@@ -183,7 +181,6 @@ class PSAPGame:
             self.FR += 1
             self.response_a += 1
         self.log_event()
-        print("current button: ", self.currentButton)
         self.update_screen()
 
     def press_button_b(self):
