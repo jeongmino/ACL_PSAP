@@ -3,15 +3,16 @@ import sys
 import csv
 import os
 import time
+from Fictitious_Participant import *
 from datetime import datetime, timedelta
 
 #전역변수로 각 Response의 할당량 설정
-FR_A = 5
+FR_A = 30
 FR_B = 10
 FR_C = 10
 
 #게임 타이머
-GAME_DURATION = 10  # 게임 지속 시간 (초 단위)
+GAME_DURATION = 60 * 3  # 게임 지속 시간 (초 단위)
 
 
 #로그 파일 설정
@@ -118,7 +119,7 @@ class PSAPGame:
             # print("before")
             self.start_button.draw(screen)
         elif self.game_over:
-            end_text = font.render("Every journey's end is a new beginning waiting to unfold", True, WHITE)
+            end_text = font.render("Game over", True, WHITE)
             screen.blit(end_text, (screen.get_width() // 2 - end_text.get_width() // 2, screen.get_height() // 2 - end_text.get_height() // 2))
         else:
             #타이머 렌더링
