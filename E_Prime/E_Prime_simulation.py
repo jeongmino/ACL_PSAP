@@ -9,13 +9,12 @@ init_prov_time = 22 * 1000  # Initial Provocation Time in milliseconds
 force_prov_interval = 2.5 * 60 * 1000  # Forced Provocation Interval in milliseconds
 pfi_duration = 31250  # PFI Duration in milliseconds
 click_rate = random.uniform(3.2, 3.3)  # Clicks per second
-time_step = 200  # Time step in milliseconds
+time_step = 10  # Time step in milliseconds
 button_ratio = [0.4, 0.3, 0.3]  # Ratio of pressing buttons 1, 2, 3
 
 # Function to generate button sequence
 def generate_button_sequence(duration, rate, ratio):
     presses = int(duration / 1000 * rate)
-    print("number of presses ", presses)
     return [random.choices([1, 2, 3], ratio)[0] for _ in range(presses)]
 
 # Initialize variables for simulation
@@ -35,8 +34,6 @@ def initialize_variables():
         'nsession_provocation': 0,
         'npress_total': 0,
         'current_time': 0,
-        'previous_press_time': 0,
-        'post_provocation_time': 0,
         'button_sequence': generate_button_sequence(session_duration, click_rate, button_ratio)
     }
 
@@ -57,43 +54,34 @@ def simulate_session(buttons_only):
             if ipi > min_ipi and state['resume_proc'] == 0:
                 state['current_opt'] = next_button
                 state['npress_opt'][next_button - 1] += 1
-                # state['press_disp'] = state['npress_opt'][next_button - 1] press_disp 은 현재 선택한 버튼을 화면에서 display 하는 것
-                # if state['npress_opt'][next_button - 1] > 1:
-                #     pass
+                state['press_disp'] = state['npress_opt'][next_button - 1]
+                if state['npress_opt'][next_button - 1] > 1:
+                    pass
 
                 if next_button == 1 and state['npress_opt'][0] == 100:
-                    state['npress_opt'][0] += 1
-                    if state['npress_opt'][0] == 100:
-                        state['completed'] = "Opt1"
-                        state['total_points'] += 1
-                        state['resume_time'] = current_press_time
-                        state['resume_proc'] = 1
-                        state['current_opt'] = 0
-                        state['current_time'] += 1000  # 1 second pause
-                        state['npress_opt'] = 0
-                elif next_button == 2:
-                    state['npress_opt'][1] += 1
-                    if state['npress_opt'][1] == 10:
-                        if current_press_time > state.get('pfi_end_time', 0) and state.get('post_provocation_period', 0) == 1:
-                            state['pfi_end_time'] = current_press_time + pfi_duration
-                            time = (current_press_time / 60000) / force_prov_interval
-                            print("time: ", time)
-                            print("state['nprov]: ", state['nprov'])
-                            if time > state['nprov']:
-                                state['provocation_time'] = state['pfi_end_time']
-                        state['completed'] = "Opt2"
-                        state['npress_opt'][1] = 0
-                        state['resume_time'] = current_press_time + 1000
-                        state['resume_proc'] = 1
-                        state['post_provocation_period'] = 0
-                        state['npress_opt'] = 0
-                elif next_button == 3 :
-                    state['npress_opt'][2] += 1
-                    if state['npress_opt'][2] == 10:
-                        if state['current_time'] > state.get('pfi_end_time', 0) and state.get('post_provocation_period', 0) == 1:
-                            state['pfi_end_time'] = current_press_time + pfi_duration
-                            if (state['current_time'] / 60000) / force_prov_interval < state['nprov']:
-                                state['provocation_time'] = state['pfi_end_time']
+                    state['completed'] = "Opt1"
+                    state['total_points'] += 1
+                    state['resume_time'] = current_press_time
+                    state['resume_proc'] = 1
+                    state['current_opt'] = 0
+                    state['current_time'] += 1000  # 1 second pause
+
+                elif next_button == 2 and state['npress_opt'][1] == 10:
+                    if current_press_time > state.get('pfi_end_time', 0) and state.get('post_provocation_period', 0) == 1:
+                        state['pfi_end_time'] = current_press_time + pfi_duration
+                        if (current_press_time / 60000) / force_prov_interval > state['nprov']:
+                            state['provocation_time'] = state['pfi_end_time']
+                    state['completed'] = "Opt2"
+                    state['npress_opt'][1] = 0
+                    state['resume_time'] = current_press_time + 1000
+                    state['resume_proc'] = 1
+                    state['post_provocation_period'] = 0
+
+                elif next_button == 3 and state['npress_opt'][2] == 10:
+                    if state['current_time'] > state.get('pfi_end_time', 0) and state.get('post_provocation_period', 0) == 1:
+                        state['pfi_end_time'] = current_press_time + pfi_duration
+                        if (state['current_time'] / 60000) / force_prov_interval < state['nprov']:
+                            state['provocation_time'] = state['pfi_end_time']
                     state['completed'] = "Opt3"
                     state['npress_opt'][2] = 0
                     state['resume_time'] = current_press_time + 1000
@@ -114,20 +102,21 @@ def simulate_session(buttons_only):
                 state['provocation_time'] += random.randint(min_iprovi, max_iprovi)
 
         # Update display logic
-        # if state['resume_proc'] > 0:
-        #     if state['current_time'] > state['resume_time'] + state['resume_proc'] * 200:
-        #         state['resume_proc'] += 1
-        #         if state['resume_proc'] == 6:
-        #             state['resume_proc'] = 0
+        if state['resume_proc'] > 0:
+            if state['current_time'] > state['resume_time'] + state['resume_proc'] * 200:
+                state['resume_proc'] += 1
+                if state['resume_proc'] == 6:
+                    state['resume_proc'] = 0
 
         if state['provocation_proc'] > 0:
             if state['current_time'] > state['current_provocation_time'] + state['provocation_proc'] * 200:
                 state['provocation_proc'] += 1
                 if state['provocation_proc'] == 6:
                     state['provocation_proc'] = 0
+
         # Increment time
         state['current_time'] += time_step
-        
+
     return state['total_points'], state['nprov']
 
 # Run simulation for button 3 only
